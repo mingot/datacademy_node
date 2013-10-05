@@ -49,17 +49,17 @@ socket.on('connection', function(client){
       }
     }
 
-    //CONSOLE MANAGEMENT
-    sh.stdout.on('data', function(data) {
-      client.emit('response', data);
-    });
+    // //CONSOLE MANAGEMENT
+    // sh.stdout.on('data', function(data) {
+    //   client.emit('response', data);
+    // });
  
-    sh.stderr.on('data', function(data) {
-      client.emit('response', data);
-    });
+    // sh.stderr.on('data', function(data) {
+    //   client.emit('response', data);
+    // });
  
-    sh.on('exit', function (code) {
-      client.emit('response','** Shell exited: ' + code + ' **');
-    });
+    // sh.on('exit', function (code) {
+    //   client.emit('response','** Shell exited: ' + code + ' **');
+    // });
 });
 
