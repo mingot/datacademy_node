@@ -25,3 +25,22 @@ rio.evaluate('c(1, 2)');
 rio.evaluate("as.character('Hello World')");
 rio.evaluate('c("a", "b")');
 rio.evaluate('Sys.sleep(5); 11')
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+MORE R (Dylan)
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+#For debugging, installed RSclient package to connect to Rserve
+
+#To get, run "wget http://www.rforge.net/RSclient/snapshot/RSclient_0.7-2.tar.gz"
+
+#To install, run "sudo aptitude install libssl-dev", then "sudo R CMD INSTALL RSclient_0.7-2.tar.gz"
+
+#Then in R:
+require('RSclient')
+c <- RSconnect(host='localhost',port=6311)
+RSeval(c,'3*4')
+RSeval(c,'a -< 2')
+RSeval(c,'a')
+
