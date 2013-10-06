@@ -1,8 +1,8 @@
-
 var http  = require('http'),
     fs    = require('fs'),
     io    = require('socket.io'),
-    rio   = require('rio'),
+//    rio   = require('rio'),
+    rserve = require('rserve-client'),
     spawn = require('child_process').spawn;
 
  
@@ -15,30 +15,40 @@ console.log('Server up and listening at port ' + port);
 
 
 var socket = io.listen(server);
+
 socket.on('connection', function(client){
 
-    // var sh = spawn('bash');
+
 
     client.on('message', function(msg) {
       console.log('client has sent:' + msg);
-      // sh.stdin.write(msg + '\n');
       // rio.evaluate(msg,Roptions);
-      rio.sourceAndEvalString(msg,Roptions);
+      // rio.sourceAndEvalString(msg,Roptions);
+
+      // make rserve connection
+      rserve.connect('ec2-54-200-76-215.us-west-2.compute.amazonaws.com',6311,
+        function(err, client) {
+          console.log('Connected');
+          client.exec(msg, function(err, ans) {
+            console.log(ans);
+            processResponse(err, ans);
+            client.end();
+          });
+        });
+
     });
     
     client.on('disconnect', function() {
       console.log('Client has disconnected');
+
     });
 
-    //R MANAGEMENT
-    Roptions = {
-      callback:processResponse,
-      host: "ec2-54-200-76-215.us-west-2.compute.amazonaws.com",
-      port: 6311
-      // path: undefined,
-      // user: "anon",
-      // password: "anon"
-    };
+    // //R MANAGEMENT
+    // Roptions = {
+    //   callback:processResponse,
+    //   host: "ec2-54-200-76-215.us-west-2.compute.amazonaws.com",
+    //   port: 6311
+    // };
 
     function processResponse(err,res){
       if(!err){
