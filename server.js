@@ -6,7 +6,7 @@ var http  = require('http'),
     spawn = require('child_process').spawn;
 
 
-//respcont = fs.readFileSync('test_servers/front_end.html');
+respcont = fs.readFileSync('test_servers/front_end.html');
 
 var port = (process.env.PORT || 5000);
 server = http.createServer().listen(port);
