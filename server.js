@@ -6,12 +6,11 @@ var http  = require('http'),
     spawn = require('child_process').spawn;
 
 
-respcont = fs.readFileSync('term.html');
+//respcont = fs.readFileSync('test_servers/front_end.html');
 
 var port = (process.env.PORT || 5000);
 server = http.createServer().listen(port);
 console.log('Server up and listening at port ' + port);
-
 
 
 var socket = io.listen(server);
@@ -27,15 +26,15 @@ socket.on('connection', function(client){
     });
     
     client.on('disconnect', function() {
-	console.log('Client has disconnected');
+      console.log('Client has disconnected');
     });
 
     //R MANAGEMENT
     Roptions = {
-	callback:processResponse,
-host: "ec2-54-200-76-215.us-west-2.compute.amazonaws.com",
-//	host: "localhost",
-	port: 6311
+      callback:processResponse,
+      host: "ec2-54-200-76-215.us-west-2.compute.amazonaws.com",
+      //host: "localhost",
+      port: 6311
     };
 
     function processResponse(err,res){

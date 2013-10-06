@@ -1,4 +1,3 @@
-
 filename = tempfile("plot", fileext = ".png")
 png(filename)
 plot(1:10)
