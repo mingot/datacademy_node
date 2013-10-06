@@ -2,7 +2,7 @@
 var http  = require('http'),
     fs    = require('fs'),
     io    = require('socket.io'),
-    rio   = require('rio'),
+    rio   = require('./rio/lib/rio'),
     spawn = require('child_process').spawn;
 
  
@@ -22,7 +22,8 @@ socket.on('connection', function(client){
     client.on('message', function(msg) {
       console.log('client has sent:' + msg);
       // sh.stdin.write(msg + '\n');
-      rio.evaluate(msg,Roptions);
+      // rio.evaluate(msg,Roptions);
+      rio.sourceAndEvalString(msg,Roptions);
     });
     
     client.on('disconnect', function() {
@@ -46,6 +47,7 @@ socket.on('connection', function(client){
       }else{
         console.log('error ocurred...');
         client.emit('response', 'An error ocurred...');
+        console.log('Response:' + res);
       }
     }
 
