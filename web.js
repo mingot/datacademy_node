@@ -2,7 +2,7 @@
 var http  = require('http'),
     fs    = require('fs'),
     io    = require('socket.io'),
-    rio   = require('./rio/lib/rio'),
+    rio   = require('rio'),
     spawn = require('child_process').spawn;
 
  
