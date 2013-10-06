@@ -32,13 +32,6 @@ function enablePlaybackMode(isPlaybackMode, options) {
 }
 exports.enablePlaybackMode = enablePlaybackMode;
 
-function hex2a(hex) {
-    var str = '';
-    for (var i = 0; i < hex.length; i += 2)
-        str += String.fromCharCode(parseInt(hex.substr(i, 2), 16));
-    return str;
-}
-
 function log(o) {
     console.log(o);
     if (debug && typeof (o) === "object") {
@@ -281,44 +274,43 @@ function sendAction(cmd, type, msg, options) {
                     log("Authentication required and crypted");
                 }
 
-		console.log('as222');
-		console.log(CAPABILITIES.PLAIN);
+                // now time for error handling
+                log('Entering error handling');
+                this.buffer("loginResponse", 16)
+                    .tap(function (vars) {
+                        var res, sc, rr;
+
+                        log("Login response");
+                        log(vars.loginResponse);
+
+                        res = int32(vars.loginResponse); // response code
+                        sc = (res >> 24) & 127; // 8 most sig bits
+                        rr = res & 255; // most sig bit
+
+                        if (rr !== 1) {
+                            log("Response with error code " + sc);
+                            console.log('ERROR');
+                            callback(true);
+                        } else {
+                            console.log('NO ERROR');
+                        }
+                    });
+                log('mid');
+
                 if (CAPABILITIES.PLAIN) {
-		    // here's where problems are currently
-                    this.buffer("loginResponse", 16)
-			.tap(function (vars) {
-                            var res, sc, rr;
-
-                            log("Login response");
-                            log(vars.loginResponse);
-                            log(hexy.hexy(vars.loginResponse));
-
-                            res = int32(vars.loginResponse);
-                            log(res);
-                            sc = (res >> 24) & 127;
-                            rr = res & 255;
-
-                            if (rr !== 1) {
-				log("Response with error code " + sc);
-				callback(true);
-                            }
-			});
                     auth = user + "\n" + password;
                     len = 20 + (auth.length + 1);
-		    console.log('asdsads');
                     sendCommand(conn, CMD_TYPE.LOGIN, auth, len,
                         "Login on Rserve");
                 }
+                log('after');
 
                 len = Buffer.byteLength(cmd);
                 len = 20 + (len + 1) + (4 - (len + 1) % 4) % 4;
-
-		console.log(!playbackMode);
-
                 if (!playbackMode) {
                     sendCommand(conn, type, cmd, len, msg);
                     close(conn);
-		}
+                }
 
             }
         })
@@ -328,26 +320,12 @@ function sendAction(cmd, type, msg, options) {
         .tap(function (vars) {
             var rl = int24(vars.lenDataPacket);
 
-	    console.log('asdfghjkl');
-
             this.buffer("dataPacket", rl)
                 .tap(function (vars) {
                     var res;
 
-		    // error message retrieval only, for now
                     log("Data packet");
                     log(vars.dataPacket);
-
-		    var hex = hexy.hexy(vars.dataPacket);
-		    var str = vars.dataPacket.toString();
-
-		    log(str);
-
-		    // hackishly find error
-		    var index1 = str.indexOf('condition') + 9;
-		    var index2 = str.indexOf('condition', index1) + 9;
-		    var errorString = str.substring(index2);
-		    log(errorString);
 
                     res = parse_SEXP(vars.dataPacket, 0);
 
@@ -400,8 +378,6 @@ function sourceAndEvalString(source, options) {
     options = options || {};
     var cmd;
     cmd = source.replace(/(\r\n)/g, "\n");
-//    cmd = 'options(show.error.messages = TRUE)\n' + cmd;
-    cmd = 'try(' + cmd + ', silent=TRUE)';
     evaluate(cmd, options);
     log('ASLKJhlalkjfhsa');
     console.log('kjyufdsaoyu');

@@ -44,3 +44,42 @@ RSeval(c,'3*4')
 RSeval(c,'a -< 2')
 RSeval(c,'a')
 
+#### IMPORTANT!! To show error messages:
+options()['show.error.messages'] == TRUE
+
+## Some output exemplifying the problem with confusing Rserve errors with actual R errors
+> capture.output(a)
+[1] "[1] 10"
+> a<-try(2*5, silent=TRUE)
+> capture.output(a)
+[1] "[1] 10"
+> a<-try(2*5, silent=TRUE)
+> capture.output(a)
+[1] "[1] 10"
+> a<-try(2*5, silent=TRUE)
+> capture.output(a)
+[1] "[1] 10"
+> a<-try(2*5, silent=TRUE)
+> capture.output(a)
+[1] "[1] 10"
+> a<-try(2*5ss, silent=TRUE)
+Error: unexpected symbol in "a<-try(2*5ss"   <---RSERVE ERROR
+> capture.output(a)
+[1] "[1] 10"
+> a<-try(2*5ss, silent=TRUE)
+Error: unexpected symbol in "a<-try(2*5ss"
+> capture.output(a)
+[1] "[1] 10"
+> a<-try(eval(2*5ss), silent=TRUE)
+Error: unexpected symbol in "a<-try(eval(2*5ss"
+> capture.output(a)
+[1] "[1] 10"
+
+> a<-try(eval(sss), silent=TRUE)
+> capture.output(a)
+[1] "[1] \"Error in eval(sss) : object 'sss' not found\\n\""
+[2] "attr(,\"class\")"
+[3] "[1] \"try-error\""
+[4] "attr(,\"condition\")"
+[5] "<simpleError in eval(sss): object 'sss' not found>"
+

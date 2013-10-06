@@ -1,11 +1,11 @@
 var http  = require('http'),
     fs    = require('fs'),
     io    = require('socket.io'),
-//    rio   = require('rio'),
-    rserve = require('rserve-client'),
+    rio   = require('rio'),
+    // rserve = require('rserve-client'),
     spawn = require('child_process').spawn;
 
- 
+
 respcont = fs.readFileSync('term.html');
 
 var port = (process.env.PORT || 5000);
@@ -19,36 +19,24 @@ var socket = io.listen(server);
 socket.on('connection', function(client){
 
 
-
     client.on('message', function(msg) {
       console.log('client has sent:' + msg);
-      // rio.evaluate(msg,Roptions);
-      // rio.sourceAndEvalString(msg,Roptions);
-
-      // make rserve connection
-      rserve.connect('ec2-54-200-76-215.us-west-2.compute.amazonaws.com',6311,
-        function(err, client) {
-          console.log('Connected');
-          client.exec(msg, function(err, ans) {
-            console.log(ans);
-            processResponse(err, ans);
-            client.end();
-          });
-        });
+      //rio.evaluate(msg,Roptions);
+      rio.sourceAndEvalString(msg,Roptions);
 
     });
     
     client.on('disconnect', function() {
-      console.log('Client has disconnected');
-
+	console.log('Client has disconnected');
     });
 
-    // //R MANAGEMENT
-    // Roptions = {
-    //   callback:processResponse,
-    //   host: "ec2-54-200-76-215.us-west-2.compute.amazonaws.com",
-    //   port: 6311
-    // };
+    //R MANAGEMENT
+    Roptions = {
+	callback:processResponse,
+host: "ec2-54-200-76-215.us-west-2.compute.amazonaws.com",
+//	host: "localhost",
+	port: 6311
+    };
 
     function processResponse(err,res){
       if(!err){
@@ -60,18 +48,5 @@ socket.on('connection', function(client){
         console.log('Response:' + res);
       }
     }
-
-    // //CONSOLE MANAGEMENT
-    // sh.stdout.on('data', function(data) {
-    //   client.emit('response', data);
-    // });
- 
-    // sh.stderr.on('data', function(data) {
-    //   client.emit('response', data);
-    // });
- 
-    // sh.on('exit', function (code) {
-    //   client.emit('response','** Shell exited: ' + code + ' **');
-    // });
 });
 
