@@ -44,7 +44,7 @@ host: "ec2-54-200-76-215.us-west-2.compute.amazonaws.com",
         client.emit('response', res);
       }else{
         console.log('error ocurred...');
-        client.emit('response', 'An error ocurred...');
+        client.emit('response', 'An error ocurred: ' + res);
         console.log('Response:' + res);
       }
     }
