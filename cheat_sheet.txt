@@ -25,3 +25,86 @@ rio.evaluate('c(1, 2)');
 rio.evaluate("as.character('Hello World')");
 rio.evaluate('c("a", "b")');
 rio.evaluate('Sys.sleep(5); 11')
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+MORE R (Dylan)
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+#For debugging, installed RSclient package to connect to Rserve
+
+#To get, run "wget http://www.rforge.net/RSclient/snapshot/RSclient_0.7-2.tar.gz"
+
+#To install, run "sudo aptitude install libssl-dev", then "sudo R CMD INSTALL RSclient_0.7-2.tar.gz"
+
+#Then in R:
+require('RSclient')
+c <- RSconnect(host='localhost',port=6311)
+RSeval(c,'3*4')
+RSeval(c,'a -< 2')
+RSeval(c,'a')
+
+#### IMPORTANT!! To show error messages:
+options()['show.error.messages'] == TRUE
+
+## Some output exemplifying the problem with confusing Rserve errors with actual R errors
+> capture.output(a)
+[1] "[1] 10"
+> a<-try(2*5, silent=TRUE)
+> capture.output(a)
+[1] "[1] 10"
+> a<-try(2*5, silent=TRUE)
+> capture.output(a)
+[1] "[1] 10"
+> a<-try(2*5, silent=TRUE)
+> capture.output(a)
+[1] "[1] 10"
+> a<-try(2*5, silent=TRUE)
+> capture.output(a)
+[1] "[1] 10"
+> a<-try(2*5ss, silent=TRUE)
+Error: unexpected symbol in "a<-try(2*5ss"   <---RSERVE ERROR
+> capture.output(a)
+[1] "[1] 10"
+> a<-try(2*5ss, silent=TRUE)
+Error: unexpected symbol in "a<-try(2*5ss"
+> capture.output(a)
+[1] "[1] 10"
+> a<-try(eval(2*5ss), silent=TRUE)
+Error: unexpected symbol in "a<-try(eval(2*5ss"
+> capture.output(a)
+[1] "[1] 10"
+
+> a<-try(eval(sss), silent=TRUE)
+> capture.output(a)
+[1] "[1] \"Error in eval(sss) : object 'sss' not found\\n\""
+[2] "attr(,\"class\")"
+[3] "[1] \"try-error\""
+[4] "attr(,\"condition\")"
+[5] "<simpleError in eval(sss): object 'sss' not found>"
+
+%% More notes: some links
+% R server
+http://www.rforge.net/Rserve/git.html
+https://rforge.net/Rserve/faq.html
+% R client
+http://www.rforge.net/RSclient/files/
+% the rio client for node.js
+https://github.com/albertosantini/node-rio
+% the simple rserve client for node.js
+https://github.com/s-u/Rserve/issues
+% the python pyRserve client doc page, and node-python
+http://pythonhosted.org/pyRserve/manual.html
+https://npmjs.org/package/node-python
+% the actual rserve client for node.js (rserve-js)
+https://npmjs.org/package/rserve
+http://github.com/cscheid/rserve-js
+% the even worse rserve node.js client
+https://npmjs.org/package/rserve-client
+
+% r system options
+http://astrostatistics.psu.edu/su07/R/html/base/html/options.html
+
+% cairo for images
+http://cran.r-project.org/web/packages/Cairo/index.html
+
