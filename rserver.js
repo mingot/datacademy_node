@@ -1,4 +1,5 @@
-var rio = require('rio');
+var rio = require('rio'),
+    fs = require("fs");
 
 
 
@@ -10,8 +11,9 @@ options = {
     //         util.puts("Rserve call failed");
     //     }
     // },
-    host: "ec2-54-200-76-215.us-west-2.compute.amazonaws.com",
-    port: 6311
+    callback: getPlot,
+    host: "127.0.0.1",
+    port: 6311,
     // path: undefined,
     // user: "anon",
     // password: "anon"
@@ -19,7 +21,6 @@ options = {
 
 function getPlot(err, res) {
     if (!err) {
-        var image = new PNG(res);
         fs.writeFile("myPlot.png", res, { encoding: "binary" }, function (err) {
             if (!err) {
                 console.log("myPlot.png saved in " + __dirname);
@@ -30,11 +31,20 @@ function getPlot(err, res) {
     }
 }
 
-rio.evaluate("pi / 2 * 2",options);
-rio.evaluate('c(1, 2)',options);
-rio.evaluate("as.character('Hello World')",options);
-rio.evaluate('c("a", "b")',options);
-rio.evaluate('Sys.sleep(5); 11',options);
+function getResponse(err, res){
+    if (!err) {
+        console.log("res:"+res);
+    } else {
+        console.log("Error");
+        console.log(res);
+    }
+}
+
+// rio.evaluate("try(j, silent=TRUE)",options);
+
+rio.sourceAndEval("nd.R", options);
+
+// "paste(capture.output(print(summary(mymodel))),collapse=\"\\n\")"
 // rio.evaluate('plot(1:5,1:5)',{
 //     callback:getPlot
 // });
