@@ -8,12 +8,24 @@ var http  = require('http'),
 
 respcont = fs.readFileSync('test_servers/front_end.html');
 
-var port = (process.env.PORT || 5000);
-server = http.createServer().listen(port);
+var port = (process.env.PORT || 5000); // proces.env.PORT is the port set by Heroku to listen on
+server = http.createServer( function(req, res){
+    fs.readFile('test_servers/front_end.html', function(err, page) {
+        res.writeHead(200, {'Content-Type': 'text/html'});
+        res.write(page);
+        res.end();
+    });
+    
+}).listen(port);
+
+
 console.log('Server up and listening at port ' + port);
 
 
 var socket = io.listen(server);
+
+
+
 
 socket.on('connection', function(client){
 
