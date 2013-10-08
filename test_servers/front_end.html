@@ -17,9 +17,11 @@
         $('#content').append('<p>' + $('<div/>').text(str).html() + '</p>');
         $(window).scrollTop($('body').height() - $(window).height() + 80);
       }
-    
-      var socket = io.connect('http://localhost:5000');
       
+      var socket = io.connect('http://datacademy-node.herokuapp.com/');    
+      //var socket = io.connect('http://localhost:5000');
+      
+
       socket.on('response', function(data) {
         add_content(data);
       });
