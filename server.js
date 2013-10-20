@@ -28,32 +28,18 @@ var socket = io.listen(server);
 
 // a pre-parser for user input
 function expression_handler(expr) {
-    // for now, move all semicolons to the end of the line outside of try()
-    var post_string = '';
-    if (expr.substring(expr.length - 1) == ';') {
-        expr = expr.substring(0, expr.length - 1);
-        post_string = ';';
-        // console.log(expr);
-        // console.log(post_string);
+    // check for single-quotes, throw error if there are
+    // any, since we use them in the wrap_in_capture command
+    if (expr.indexOf("'") >= 0) {
+        throw "Error: expression cannot contain single-quotes at this time.\nPlease use double-quotes instead.";
     }
-    // console.log(expr);
-    // if expression contains =, only wrap last part in try()
-    if (expr.indexOf("=") >= 0) {
-        var expr_split = expr.split(/=(.+)?/);
-        var lhs = expr_split[0];
-        var rhs = expr_split[1];
-        // console.log('Yes =');
-        // console.log(expr);
-        return lhs + '=' + wrap_in_try(rhs) + post_string;
-    } else {
-        // console.log('No =');
-        // console.log(expr);
-        return wrap_in_try(expr) + post_string;
-    }
+    return wrap_in_capture(expr);
 }
 
-// wrap a string in try(expr, silent=TRUE)
-function wrap_in_try(expr) {return 'try(' + expr + ', silent=TRUE)';}
+// wrap a string in with "out=capture.output(eval(try(parse(text='MY_STRING'), silent=TRUE))); out"
+function wrap_in_capture(expr) {
+    return "out=capture.output(eval(try(parse(text='" + expr + "'), silent=TRUE))); outp = paste(out, collapse='\n'); outp";
+}
 
 socket.on('connection', function(client){
 
@@ -72,6 +58,7 @@ socket.on('connection', function(client){
             console.log('Sending command "' + msg + '"');
             r.eval(msg, processResponse);
         } catch (err) {
+            console.log('Received error:');
             console.log(err);
         }
     });
