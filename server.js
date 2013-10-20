@@ -26,6 +26,35 @@ console.log('Server up and listening at port ' + port);
 
 var socket = io.listen(server);
 
+// a pre-parser for user input
+function expression_handler(expr) {
+    // for now, move all semicolons to the end of the line outside of try()
+    var post_string = '';
+    if (expr.substring(expr.length - 1) == ';') {
+        expr = expr.substring(0, expr.length - 1);
+        post_string = ';';
+        // console.log(expr);
+        // console.log(post_string);
+    }
+    // console.log(expr);
+    // if expression contains =, only wrap last part in try()
+    if (expr.indexOf("=") >= 0) {
+        var expr_split = expr.split(/=(.+)?/);
+        var lhs = expr_split[0];
+        var rhs = expr_split[1];
+        // console.log('Yes =');
+        // console.log(expr);
+        return lhs + '=' + wrap_in_try(rhs) + post_string;
+    } else {
+        // console.log('No =');
+        // console.log(expr);
+        return wrap_in_try(expr) + post_string;
+    }
+}
+
+// wrap a string in try(expr, silent=TRUE)
+function wrap_in_try(expr) {return 'try(' + expr + ', silent=TRUE)';}
+
 socket.on('connection', function(client){
 
     // some hard-coded tests
@@ -39,7 +68,8 @@ socket.on('connection', function(client){
         try {
             // if message doesn't contain an "=", this works
             // but if it does, write eval(varname=try(rest_of_expr,silent=TRUE));
-            msg = 'try(' + msg + ', silent=TRUE)';
+            msg = expression_handler(msg);
+            console.log('Sending command "' + msg + '"');
             r.eval(msg, processResponse);
         } catch (err) {
             console.log(err);
