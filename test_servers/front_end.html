@@ -14,7 +14,7 @@
     <script src="lib/jquery-latest.min.js"></script>
     <script type="text/javascript" charset="utf-8">
       function add_content(str){
-        $('#content').append('<p>' + $('<div/>').text(str).html() + '</p>');
+        $('#content').append('<p><pre>' + $('<div/>').text(str).html() + '</pre></p>');
         $(window).scrollTop($('body').height() - $(window).height() + 80);
       }
       
@@ -23,7 +23,10 @@
       var socket = io.connect('http://localhost:5000');
 
       socket.on('response', function(data) {
-        add_content(data);
+        var lines = data.split('\n');
+        for (var i = 0; i < lines.length; i++) {
+          add_content(lines[i]);
+        }
       });
 
       $(function(){ $('form').submit(function(e){

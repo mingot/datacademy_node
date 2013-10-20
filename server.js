@@ -33,7 +33,11 @@ function expression_handler(expr) {
     if (expr.indexOf("'") >= 0) {
         throw "Error: expression cannot contain single-quotes at this time.\nPlease use double-quotes instead.";
     }
-    return wrap_in_capture(expr);
+    if (expr.substring(0,4) === 'help') {
+        return "out<-capture.output(tools:::Rd2txt(utils:::.getHelpFile(as.character(" + expr + ")))); outp = paste(out, collapse='\n'); outp";
+    } else {
+        return wrap_in_capture(expr);
+    }
 }
 
 // wrap a string in with "out=capture.output(eval(try(parse(text='MY_STRING'), silent=TRUE))); out"
@@ -70,8 +74,13 @@ socket.on('connection', function(client){
     function processResponse(res,err){
       if (!err){
           var response = res.value.value['0'];
+          var response_processed = response.replace(/\uFFFD/g, '');
           console.log('Response:' + response);
-          response_processed = response.replace("\n", "<br />");
+          //response_processed = response.replace("\n", '<br>');
+          // handle replacing the "_\b" with nothing in help output
+          if (response_processed.indexOf('\b') >= 0) {
+              response_processed = response_processed.replace('\b','');
+          }
           client.emit('response', response_processed);
       } else {
           console.log('error ocurred...');
