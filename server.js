@@ -68,13 +68,15 @@ socket.on('connection', function(client){
     });
 
     function processResponse(res,err){
-      if(!err){
-        console.log('Response:' + res.value.value['0']);
-        client.emit('response', res.value.value['0']);
-      }else{
-        console.log('error ocurred...');
-        client.emit('response', 'An error ocurred: ' + res);
-        console.log('Response:' + res);
+      if (!err){
+          var response = res.value.value['0'];
+          console.log('Response:' + response);
+          response_processed = response.replace("\n", "<br />");
+          client.emit('response', response_processed);
+      } else {
+          console.log('error ocurred...');
+          client.emit('response', 'An error ocurred: ' + res);
+          console.log('Response:' + res);
       }
     }
 });
