@@ -28,10 +28,10 @@ heroku open
 Assuming you have rserve-js checked out via github in an adjacent directory, you can start Rserve locally with something like:
 
 ```sh
-$(cd ../others/rserve-js/tests/ && r_files/start_no_ocap)
+cd ../others/rserve-js/tests/ && r_files/start_no_ocap
 ```
 
-To check if it's running (can use netstat, or install sockstat):
+(Don't forget to cd back). To check if it's running (can use netstat, or install sockstat):
 
 ```sh
 sockstat | grep -i rserve
