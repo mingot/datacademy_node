@@ -1,0 +1,35 @@
+R variable name regular expression: will match any valid variable name in R.
+
+^([\.]([\.a-zA-Z_][\.a-zA-Z0-9_]*)?|([a-zA-Z][\.a-zA-Z0-9_]*))$
+
+The first charcacter can be \.a-zA-Z
+
+If C1 == ".", the second char cannot be a number, but the third and subsequent characters can be. If C1 matches a-zA-Z, all subsequent chars can be \.a-zA-Z0-9_
+
+Here are some tests:
+
+// valid variable names
+potato
+potato123
+potato._123._._213._.._12331231ppasdhhsdf_..ASs.as
+v2
+.v2
+..
+...
+...asdfsad123fsadfsad
+..asdfasd1233fdsafsad
+.asd2313fsafdasdf
+.a2sd_as123dasd
+._.asda12321dsf._.
+
+// invalid variable names
+1234vasdd
+1.a2dasd
+.12dasfq
+_123fasda
+_asdas123
+_.sad123
+__asd
+
+Try here (don't forget to check the "^$ match at line breaks" first):
+http://regexpal.com/

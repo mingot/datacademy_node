@@ -32,13 +32,22 @@ function expression_handler(expr) {
     if (expr.indexOf("'") >= 0) {
         throw "Error: expression cannot contain single-quotes at this time.\nPlease use double-quotes instead.";
     }
+    if (expr.charAt(0) == "#") { // comments
+        return expr;
+    }
+    // first char can only be . or alphanum. second can be ., alpha, _. All subsequent can be ., alphanum, _
+    // see variable_name_regexp.txt
+    var reg = RegExp("^([\.]([\.a-zA-Z_][\.a-zA-Z0-9_]*)?|([a-zA-Z]([\.a-zA-Z0-9_]*)?))$");
+    if (reg.test(expr)) {
+        return wrap_variable_access(expr);
+    }
     if (expr.substring(0,4) === 'help') {
         return wrap_help_cmd(expr);
-    } else if (expr.substring(0,4) === 'plot') {
-        return wrap_plot_cmd(expr);
-    } else {
-        return wrap_capture(expr);
     }
+    if (expr.substring(0,4) === 'plot') {
+        return wrap_plot_cmd(expr);
+    } // else
+    return wrap_capture(expr);
 }
 
 // wrap a help command with the necessary peripherals to capture output
@@ -49,6 +58,11 @@ function wrap_help_cmd(expr) {
 // wrap a string in with "out=capture.output(eval(try(parse(text='MY_STRING'), silent=TRUE))); out"
 function wrap_capture(expr) {
     return "out=capture.output(eval(try(parse(text='" + expr + "'), silent=TRUE))); outp = paste(out, collapse='\n'); outp";
+}
+
+// a special wrapper for printing raw variable names, which in rserve-js cause a fatal error in node
+function wrap_variable_access(expr) {
+    return "out=capture.output(eval(try(" + expr + "), silent=TRUE))); outp = paste(out, collapse='\n'); outp";
 }
 
 // wrap a plot command to capture output
