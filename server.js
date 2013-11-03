@@ -68,12 +68,12 @@ function wrap_variable_access(expr) {
 // wrap a plot command to capture output
 function wrap_plot_cmd(expr) {
     // need to wrap the expr in error handling.
-    var cmd = 'filename <- tempfile("plot", fileext = ".svg");\n' +
+    var cmd = "filename <- tempfile('plot', fileext = '.svg');\n" +
         'svg(filename);\n' +
         wrap_capture(expr) + '\n' +
         'if (length(outp) > 1) print("Error in plot command:\n" + outp);\n' +
         'capture.output(dev.off());\n' + // keep output from reaching stdout here
-        'image <- readBin(filename, "raw", 9999);\n' +
+        "image <- readBin(filename, 'raw', 9999);\n" +
         'unlink(filename);\n' +
         'image\n'
     return cmd;
