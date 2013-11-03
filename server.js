@@ -94,7 +94,11 @@ socket.on('connection', function(client){
             // but if it does, write eval(varname=try(rest_of_expr,silent=TRUE));
             msg = expression_handler(msg);
             console.log('Sending command "' + msg + '"');
-            r.eval(msg, processResponse);
+            if (msg.substring(0,4) === 'plot') {
+                r.eval(msg, processPlotResponse);
+            } else {
+                r.eval(msg, processResponse);
+            }
         } catch (err) {
             console.log('Received error:');
             console.log(err);
@@ -120,5 +124,16 @@ socket.on('connection', function(client){
           console.log('Response:' + res);
       }
     }
-});
 
+    function processPlotResponse(res,err){
+      if (!err){
+          var response = res.value.value['0'];
+          console.log('Response:' + response);
+          client.emit('response', response);
+      } else {
+          console.log('error ocurred...');
+          client.emit('response', 'An error ocurred: ' + res);
+          console.log('Response:' + res);
+      }
+    }
+});
