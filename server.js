@@ -77,7 +77,19 @@ function wrap_plot_cmd(expr) {
         'unlink(filename);\n' +
         'image\n'
     return cmd;
-x}
+}
+
+// actual code for reading from file
+// # get a tmp file name
+// filename <- tempfile("plot", fileext=".svg");
+// svg(filename);
+// plot(1:10);
+// dev.off();
+// # now get file size
+// img_size <- file.info(filename)$size
+// # use that file size when reading data
+// image <- readBin(filename, "raw", img_size);
+// image
 
 socket.on('connection', function(client){
 
