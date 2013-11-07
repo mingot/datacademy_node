@@ -65,7 +65,7 @@ function wrap_capture(expr) {
 
 // a special wrapper for printing raw variable names, which in rserve-js cause a fatal error in node
 function wrap_variable_access(expr) {
-    return "out=capture.output(eval(try(" + expr + "), silent=TRUE))); outp = paste(out, collapse='\n'); outp";
+    return "out=capture.output(eval(try(" + expr + ", silent=TRUE))); outp = paste(out, collapse='\n'); outp";
 }
 
 // wrap a plot command to capture output
