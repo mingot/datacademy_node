@@ -1,13 +1,24 @@
 <html>
-<head></head>
+<head>
+  <script type="text/css">
+#content {
+    float: left;
+}
+
+#svg_content {
+    float: right
+}
+  </script>
+</head>
 <body>
   <div class="row">
     <div id="content"></div>
-      <form>
-        &gt; <input>
-      </form>
-    </div>
+    <div id="svg_content"></div>
+    <form>
+      &gt; <input>
+    </form>
   </div>
+</div>
 
     <script src="lib/socket.io.js"></script>
     <!-- <script src="http://code.jquery.com/jquery-latest.min.js"></script> -->
@@ -27,6 +38,10 @@
         for (var i = 0; i < lines.length; i++) {
           add_content(lines[i]);
         }
+      });
+
+      socket.on('plot_response', function(data) {
+        $('#svg_content').html(data);
       });
 
       $(function(){ $('form').submit(function(e){

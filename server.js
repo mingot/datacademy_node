@@ -131,10 +131,11 @@ socket.on('connection', function(client){
       if (!err){
           var response = res.value.value['0'];
           console.log('Response:' + response);
-          client.emit('response', response);
+          client.emit('response', "Received plot.");
+          client.emit('plot_response', response);
       } else {
           console.log('error ocurred...');
-          client.emit('response', 'An error ocurred: ' + res);
+          client.emit('plot_response', 'An error ocurred: ' + res);
           console.log('Response:' + res);
       }
     }
