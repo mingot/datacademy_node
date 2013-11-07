@@ -1,3 +1,6 @@
+/* The following line is for disabling an unnecessary jshint warning. */
+/* http://jslinterrors.com/eval-can-be-harmful/ */
+/* jshint -W061 */
 var http  = require('http'),
     fs    = require('fs'),
     io    = require('socket.io'),
@@ -37,14 +40,14 @@ function expression_handler(expr) {
     }
     // first char can only be . or alphanum. second can be ., alpha, _. All subsequent can be ., alphanum, _
     // see variable_name_regexp.txt
-    var reg = RegExp("^([\.]([\.a-zA-Z_][\.a-zA-Z0-9_]*)?|([a-zA-Z]([\.a-zA-Z0-9_]*)?))$");
+    var reg = RegExp("^([\\.]([\\.a-zA-Z_][\\.a-zA-Z0-9_]*)?|([a-zA-Z]([\\.a-zA-Z0-9_]*)?))$");
     if (reg.test(expr)) {
         return wrap_variable_access(expr);
     }
-    if (expr.substring(0,4) === 'help') {
+    if (expr.substring(0,4) == 'help') {
         return wrap_help_cmd(expr);
     }
-    if (expr.substring(0,4) === 'plot') {
+    if (expr.substring(0,4) == 'plot') {
         return wrap_plot_cmd(expr);
     } // else
     return wrap_capture(expr);
@@ -68,28 +71,15 @@ function wrap_variable_access(expr) {
 // wrap a plot command to capture output
 function wrap_plot_cmd(expr) {
     // need to wrap the expr in error handling.
-    var cmd = "filename <- tempfile('plot', fileext = '.svg');\n" +
-        'svg(filename);\n' +
-        wrap_capture(expr) + '\n' +
-        'if (length(outp) > 1) print("Error in plot command:\n" + outp);\n' +
-        'capture.output(dev.off());\n' + // keep output from reaching stdout here
-        "image <- readBin(filename, 'raw', 9999);\n" +
-        'unlink(filename);\n' +
-        'image\n'
+    var cmd = 'filename <- tempfile("plot", fileext=".svg"); ' +
+	'svg(filename); ' +
+	//wrap_capture(expr) + ' ' +
+	expr + '; ' +
+	'dev.off(); ' +
+	'text <- readLines(filename, encoding="UTF-8"); ' +
+	'paste(text, collapse="\n")';
     return cmd;
 }
-
-// actual code for reading from file
-// # get a tmp file name
-// filename <- tempfile("plot", fileext=".svg");
-// svg(filename);
-// plot(1:10);
-// dev.off();
-// # now get file size
-// img_size <- file.info(filename)$size
-// # use that file size when reading data
-// image <- readBin(filename, "raw", img_size);
-// image
 
 socket.on('connection', function(client){
 
@@ -99,14 +89,14 @@ socket.on('connection', function(client){
     // r.eval('try(fizzbizz, silent=TRUE)',function(a) {console.log(a);});
     // r.eval('3*5',function(a) {console.log(a);});
 
-    client.on('message', function(msg) {
-      console.log('client has sent:' + msg);
+    client.on('message', function(msg_raw) {
+      console.log('client has sent:' + msg_raw);
         try {
             // if message doesn't contain an "=", this works
             // but if it does, write eval(varname=try(rest_of_expr,silent=TRUE));
-            msg = expression_handler(msg);
+            msg = expression_handler(msg_raw);
             console.log('Sending command "' + msg + '"');
-            if (msg.substring(0,4) === 'plot') {
+            if (msg_raw.substring(0,4) == 'plot') {
                 r.eval(msg, processPlotResponse);
             } else {
                 r.eval(msg, processResponse);
