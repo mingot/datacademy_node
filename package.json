@@ -22,8 +22,8 @@
     "grunt-cli": "~0.1.9",
     "grunt-contrib-jshint": "~0.6.3",
     "grunt-vows-runner": "~0.6.0",
+    "jshint": "~2.3.0",
     "vows": "~0.7.0"
-    "jshint": "~2.3.0"
   },
   "engines": {
     "node": "0.10.13",
@@ -31,12 +31,12 @@
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/heroku/node-js-sample"
+    "url": "https://github.com/datacademy/datacademy_node"
   },
   "keywords": [
     "node",
     "heroku"
   ],
   "author": "Dylan Sherry",
-  "license": "Creative Commons Attribution-NonCommercial-ShareAlike 3.0 Unported",
+  "license": "Creative Commons Attribution-NonCommercial-ShareAlike 3.0 Unported"
 }
