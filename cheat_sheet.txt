@@ -108,3 +108,5 @@ http://astrostatistics.psu.edu/su07/R/html/base/html/options.html
 % cairo for images
 http://cran.r-project.org/web/packages/Cairo/index.html
 
+Using jshint for static checking. To install globally:
+sudo npm install jshint -g
