@@ -41,9 +41,8 @@
           var input = $('input');
           var inputVal = input.val();
           $.post('http://localhost:5000/r_eval',
-              inputVal,
-              //JSON.stringify({'r_cmd': inputVal, 'testing': 'out'}),
-              //{'r_cmd': inputVal, 'testing': 'out'},
+              //inputVal,
+              JSON.stringify({'r_cmd': inputVal, 'testing': 'out'}),
               function(data, status, xhr) {
                   add_content('>' + inputVal);
                   input.val('');

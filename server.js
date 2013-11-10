@@ -38,7 +38,7 @@ function routing_handler(req, res) {
 	    res.end();
 	});
 	break;
-    case 'lib': // '/lib'
+    case 'lib': // '/lib' for loading jquery and other front_end dependencies
 	if (url_groups.length > 2) {
 	    unsupported_endpoint(req, res);
 	}
@@ -180,9 +180,8 @@ function handle_r_input(http_request, http_response) {
 	try {
 	    console.log('Client has sent:' + fullBody);
 	    // extract expression from JSON body
-	    // var body_obj = JSON.parse(fullBody);
-	    // var r_cmd_raw = body_obj.r_cmd;
-	    var r_cmd_raw = fullBody;
+	    var body_obj = JSON.parse(fullBody);
+	    var r_cmd_raw = body_obj.r_cmd;
 	    console.log('r_cmd_raw is ' + r_cmd_raw);
             var r_cmd = expression_handler(r_cmd_raw);
             console.log('Evaluating command "' + r_cmd + '"');
