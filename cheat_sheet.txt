@@ -110,3 +110,40 @@ http://cran.r-project.org/web/packages/Cairo/index.html
 
 Using jshint for static checking. To install globally:
 sudo npm install jshint -g
+
+Testing API, used telnet:
+
+-----
+GET /r_eval HTTP/1.1
+-----
+yeilds a 400 error like:
+-----
+HTTP/1.1 400 Bad Request
+Content-Length: 0
+Content-Type: text/plain
+Date: Sun, 10 Nov 2013 09:58:57 GMT
+Connection: keep-alive
+
+{"r_response":"","err":"An error occurred during expression eval: Error: not configured to support HTTP GET requests"}
+-----
+
+-----
+POST /r_eval HTTP/1.1
+Host: localhost
+Port: 80
+Content-Type: text/plain
+Content-Length: 5
+
+123*5
+-----
+yields a response object like:
+-----
+HTTP/1.1 200 OK
+Content-Length: 7
+Content-Type: text/plain
+Date: Sun, 10 Nov 2013 10:12:30 GMT
+Connection: keep-alive
+
+{"r_response":"[1] 615"}
+-----
+

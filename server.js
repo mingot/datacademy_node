@@ -2,10 +2,10 @@
 /* http://jslinterrors.com/eval-can-be-harmful/ */
 /* jshint -W061 */
 var http  = require('http'),
-    fs    = require('fs'),
-    io    = require('socket.io'),
-    rserve = require('rserve'),
-    spawn = require('child_process').spawn;
+fs    = require('fs'),
+io    = require('socket.io'),
+rserve = require('rserve'),
+spawn = require('child_process').spawn;
 
 respcont = fs.readFileSync('test_servers/front_end.html');
 
@@ -15,18 +15,20 @@ var r = rserve.create();
 
 // start listening for connections from django frontend
 var port = (process.env.PORT || 5000); // proces.env.PORT is the port set by Heroku to listen on
-server = http.createServer( function(req, res){
-    fs.readFile('test_servers/front_end.html', function(err, page) {
-        res.writeHead(200, {'Content-Type': 'text/html'});
-        res.write(page);
-        res.end();
-    });
-
-}).listen(port);
-
+server = http.createServer(routing_handler).listen(port);
 console.log('Server up and listening at port ' + port);
 
-var socket = io.listen(server);
+// for handling different http endpoints
+function routing_handler(req, res) {
+    switch(req.url) {
+    case '/r_eval':
+	handle_r_input(req, res);
+	break;
+    default:
+	res.writeHead(400, 'URL endpoint ' + req.url + ' not supported', {'Content-Type': 'text/plain'});
+	res.end();
+    }
+}
 
 // a pre-parser for user input
 function expression_handler(expr) {
@@ -81,62 +83,76 @@ function wrap_plot_cmd(expr) {
     return cmd;
 }
 
-socket.on('connection', function(client){
+// some hard-coded tests
+// r.eval('3*4',function(a) {console.log(a);});
+// r.eval('try(3*4foobar, silent=TRUE)',function(a) {console.log(a);});
+// r.eval('try(fizzbizz, silent=TRUE)',function(a) {console.log(a);});
+// r.eval('3*5',function(a) {console.log(a);});
 
-    // some hard-coded tests
-    // r.eval('3*4',function(a) {console.log(a);});
-    // r.eval('try(3*4foobar, silent=TRUE)',function(a) {console.log(a);});
-    // r.eval('try(fizzbizz, silent=TRUE)',function(a) {console.log(a);});
-    // r.eval('3*5',function(a) {console.log(a);});
+function handle_r_input(http_request, http_response) {
+    // we define this callback here so it has access to the http_response object
+    function processResponse(r_response_raw,err) {
+	if (!err){
+            var r_response = r_response_raw.value.value['0'];
+            console.log('Raw response:' + r_response_raw);
+	    if (r_response.substring(0,4) == 'plot') {
+		// handle replacing the "_\b" with nothing in help output
+		if (r_response.indexOf('\b') >= 0) {
+		    r_response = r_response.replace('\b','');
+		}
+	    }
+	    http_response.writeHead(200, {
+		'Content-Length': r_response.length,
+		'Content-Type': 'text/plain'
+	    });
+	    http_response.write(JSON.stringify({'r_response':r_response}));
+	    http_response.end();
+	} else {
+            console.log('Error in response: ' + r_response_raw);
+	    http_response.writeHead(400, {
+		'Content-Length': r_response_raw.length,
+		'Content-Type': 'text/plain'
+	    });
+	    http_response.write(JSON.stringify({'r_response':r_response_raw,
+						'err':'An error occurred during expression eval: ' + err}));
+	    http_response.end();
+	}
+    }
 
-    client.on('message', function(msg_raw) {
-      console.log('client has sent:' + msg_raw);
-        try {
-            // if message doesn't contain an "=", this works
-            // but if it does, write eval(varname=try(rest_of_expr,silent=TRUE));
-            msg = expression_handler(msg_raw);
-            console.log('Sending command "' + msg + '"');
-            if (msg_raw.substring(0,4) == 'plot') {
-                r.eval(msg, processPlotResponse);
-            } else {
-                r.eval(msg, processResponse);
-            }
-        } catch (err) {
+    // first, only accept POSTs
+    if (http_request.method == 'GET') {
+	processResponse('','Error: not configured to support HTTP GET requests');
+	return;
+    } else if (http_request.method == 'POST') {
+	console.log('Client has sent HTTP POST');
+    } else {
+	processResponse('','Error: not configured to support HTTP requests of type ' + http_request.method);
+	return;
+    }
+
+    console.log('Body of post:' + http_request.body);
+    //console.assert(http_request.body, 'Error: no http_request.body');
+
+    // start collecting the http POST data
+    var fullBody = '';
+    http_request.on('data', function(chunk) {
+	console.log('Received more data:' + chunk.toString());
+	fullBody += chunk.toString();
+    });
+
+    http_request.on('end', function() {
+	try {
+	    console.log('Client has sent:' + fullBody);
+            msg = expression_handler(fullBody);
+            console.log('Evaluating command "' + msg + '"');
+            r.eval(msg, processResponse);
+	    return;
+	} catch (err) {
             console.log('Received error:');
             console.log(err);
-        }
+	    // use error handling code in processResponse
+	    processResponse('',err);
+	    return;
+	}
     });
-
-    client.on('disconnect', function() {
-      console.log('Client has disconnected');
-    });
-
-    function processResponse(res,err){
-      if (!err){
-          var response = res.value.value['0'];
-          console.log('Response:' + response);
-          // handle replacing the "_\b" with nothing in help output
-          if (response.indexOf('\b') >= 0) {
-              response = response.replace('\b','');
-          }
-          client.emit('response', response);
-      } else {
-          console.log('error ocurred...');
-          client.emit('response', 'An error ocurred: ' + res);
-          console.log('Response:' + res);
-      }
-    }
-
-    function processPlotResponse(res,err){
-      if (!err){
-          var response = res.value.value['0'];
-          console.log('Response:' + response);
-          client.emit('response', "Received plot.");
-          client.emit('plot_response', response);
-      } else {
-          console.log('error ocurred...');
-          client.emit('plot_response', 'An error ocurred: ' + res);
-          console.log('Response:' + res);
-      }
-    }
-});
+}
