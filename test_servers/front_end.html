@@ -13,7 +13,7 @@
   </div>
 </div>
 
-    <script src="lib/socket.io.js"></script>
+    <!-- <script src="lib/socket.io.js"></script> -->
     <!-- <script src="http://code.jquery.com/jquery-latest.min.js"></script> -->
     <script src="lib/jquery-latest.min.js"></script>
     <script type="text/javascript" charset="utf-8">
@@ -24,31 +24,45 @@
       
       // this socket connects to our node backend (server.js) which handles rserve
       //var socket = io.connect('http://datacademy-node.herokuapp.com/');    
-      var socket = io.connect('http://localhost:5000');
+      //var socket = io.connect('http://localhost:5000');
 
-      socket.on('response', function(data) {
+      function onResponse(data) {
         var lines = data.split('\n');
         for (var i = 0; i < lines.length; i++) {
           add_content(lines[i]);
         }
-      });
+      };
 
-      socket.on('plot_response', function(data) {
+      function onPlotResponse(data) {
         $('#svg_content').html(data);
-      });
+      };
 
       $(function(){ $('form').submit(function(e){
           var input = $('input');
           var inputVal = input.val();
-          socket.emit('message',inputVal);
-          add_content('>' + inputVal);
-          input.val('');
+          $.post('http://localhost:5000/r_eval',
+              inputVal,
+              //JSON.stringify({'r_cmd': inputVal, 'testing': 'out'}),
+              //{'r_cmd': inputVal, 'testing': 'out'},
+              function(data, status, xhr) {
+                  add_content('>' + inputVal);
+                  input.val('');
+                  responseJsonObject = JSON.parse(data);
+                  responseVal = responseJsonObject.r_response;
+                  if (inputVal.substr(0,4) == 'plot') {
+                      console.log('onPlotResponse: \n' + data);
+                      onPlotResponse(responseVal);
+                  } else {
+                      console.log('onResponse: \n' + data);
+                      onResponse(responseVal);
+                  }
+          });
           return false;
-        });
-        $('input').focus();
+          $('input').focus();
+      })
       });
-    
-    </script> 
+
+    </script>
 
 </body>
 </html>

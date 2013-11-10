@@ -15,19 +15,52 @@ var r = rserve.create();
 
 // start listening for connections from django frontend
 var port = (process.env.PORT || 5000); // proces.env.PORT is the port set by Heroku to listen on
-server = http.createServer(routing_handler).listen(port);
+var server = http.createServer(routing_handler).listen(port);
 console.log('Server up and listening at port ' + port);
 
 // for handling different http endpoints
 function routing_handler(req, res) {
-    switch(req.url) {
-    case '/r_eval':
+    // do some parsing of the req.url to get the root domain
+    var url_groups = req.url.split("/");
+    if (url_groups.length < 2) {
+	unsupported_endpoint(req, res);
+    }
+    // take all elements after first group
+    url_groups = url_groups.slice(1, url_groups.length );
+    var first_url_group = url_groups[0];
+
+    switch(first_url_group) {
+    case '': // '/'
+	console.log('Posting locally');
+	fs.readFile('test_servers/front_end.html', function(err, page) {
+	    res.writeHead(200, {'Content-Type': 'text/html'});
+	    res.write(page);
+	    res.end();
+	});
+	break;
+    case 'lib': // '/lib'
+	if (url_groups.length > 2) {
+	    unsupported_endpoint(req, res);
+	}
+	// use second val to retreive file
+	console.log('Posting local lib ' + req.url);
+	fs.readFile('test_servers/lib/' + url_groups[1], function(err, page) {
+	    res.writeHead(200, {'Content-Type': 'text/html'});
+	    res.write(page);
+	    res.end();
+	});
+	break;
+    case 'r_eval': // '/r_eval'
 	handle_r_input(req, res);
 	break;
     default:
+	unsupported_endpoint(req, res);
+    }
+}
+
+function unsupported_endpoint(req, res) {
 	res.writeHead(400, 'URL endpoint ' + req.url + ' not supported', {'Content-Type': 'text/plain'});
 	res.end();
-    }
 }
 
 // a pre-parser for user input
@@ -93,40 +126,43 @@ function handle_r_input(http_request, http_response) {
     // we define this callback here so it has access to the http_response object
     function processResponse(r_response_raw,err) {
 	if (!err){
+	    console.log("Raw value: " + r_response_raw.toString());
             var r_response = r_response_raw.value.value['0'];
-            console.log('Raw response:' + r_response_raw);
+            console.log('Raw response: ' + r_response_raw);
 	    if (r_response.substring(0,4) == 'plot') {
 		// handle replacing the "_\b" with nothing in help output
 		if (r_response.indexOf('\b') >= 0) {
 		    r_response = r_response.replace('\b','');
 		}
 	    }
+	    responseString = JSON.stringify({'r_response':r_response});
 	    http_response.writeHead(200, {
-		'Content-Length': r_response.length,
+		'Content-Length': responseString.length,
 		'Content-Type': 'text/plain'
 	    });
-	    http_response.write(JSON.stringify({'r_response':r_response}));
+	    http_response.write(responseString);
 	    http_response.end();
 	} else {
             console.log('Error in response: ' + r_response_raw);
+	    responseString = JSON.stringify({'r_response':r_response_raw,
+					    'err':'An error occurred during expression eval: ' + err});
 	    http_response.writeHead(400, {
-		'Content-Length': r_response_raw.length,
+		'Content-Length': responseString.length,
 		'Content-Type': 'text/plain'
 	    });
-	    http_response.write(JSON.stringify({'r_response':r_response_raw,
-						'err':'An error occurred during expression eval: ' + err}));
+	    http_response.write(responseString);
 	    http_response.end();
 	}
     }
 
     // first, only accept POSTs
     if (http_request.method == 'GET') {
-	processResponse('','Error: not configured to support HTTP GET requests');
+	processResponse('','Error: not configured to support HTTP GET requests for /r_eval');
 	return;
     } else if (http_request.method == 'POST') {
 	console.log('Client has sent HTTP POST');
     } else {
-	processResponse('','Error: not configured to support HTTP requests of type ' + http_request.method);
+	processResponse('','Error: not configured to support HTTP requests of type ' + http_request.method + ' for /r_eval');
 	return;
     }
 
@@ -143,9 +179,14 @@ function handle_r_input(http_request, http_response) {
     http_request.on('end', function() {
 	try {
 	    console.log('Client has sent:' + fullBody);
-            msg = expression_handler(fullBody);
-            console.log('Evaluating command "' + msg + '"');
-            r.eval(msg, processResponse);
+	    // extract expression from JSON body
+	    // var body_obj = JSON.parse(fullBody);
+	    // var r_cmd_raw = body_obj.r_cmd;
+	    var r_cmd_raw = fullBody;
+	    console.log('r_cmd_raw is ' + r_cmd_raw);
+            var r_cmd = expression_handler(r_cmd_raw);
+            console.log('Evaluating command "' + r_cmd + '"');
+            r.eval(r_cmd, processResponse);
 	    return;
 	} catch (err) {
             console.log('Received error:');
