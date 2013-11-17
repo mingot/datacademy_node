@@ -65,27 +65,27 @@ function routing_handler(req, res) {
     case 'register_user':
         console.log('Registering new user');
         console.log('Headers: %j', req.headers);
-        if (!req.headers.hasOwnProperty("cookie")) {
-            sendError(res, 400, 'Error: no cookie header in HTTP request');
+        if (!req.headers.hasOwnProperty("x_cookie")) {
+            sendError(res, 400, 'Error: no x_cookie header in HTTP request');
         }
         // TODO check this was a GET
         // TODO generate cookie here and send back to user -- stormpath?
-        new_user(req.headers.cookie);
-        sendResponse(res, 200, 'Successfully registered new user with id ' + req.headers.cookie);
+        new_user(req.headers.x_cookie);
+        sendResponse(res, 200, 'Successfully registered new user with id ' + req.headers.x_cookie);
         break;
     case 'r_eval': // '/r_eval'
         // get user auth cookie
         console.log('Headers: %j', req.headers);
-        if (!req.headers.hasOwnProperty("cookie")) {
+        if (!req.headers.hasOwnProperty("x_cookie")) {
             sendError(res, 400, 'Error: no cookie header in HTTP request');
         }
 
         // get the user's user_obj
-        var user_obj = get_user_object(req.headers.cookie);
+        var user_obj = get_user_object(req.headers.x_cookie);
 
         // check this user exists already
         if (!user_obj) {
-            sendError(res, 400, 'Error: no user with cookie "' + req.headers.cookie + '"');
+            sendError(res, 400, 'Error: no user with cookie "' + req.headers.x_cookie + '"');
         }
 
         // pass this user's rserve-js connection to handle_r_input
@@ -194,7 +194,7 @@ function sendRawResponse(http_response, statusCode, responseString) {
 
 // send a successful response (typically 200)
 function sendResponse(http_response, statusCode, responseString) {
-    var respJSON = JSON.stringify({'r_response':responseString});
+    var respJSON = JSON.stringify({'response':responseString});
     sendRawResponse(http_response, statusCode, respJSON);
 }
 
@@ -217,7 +217,7 @@ function handle_r_input(http_request, http_response, user_obj) {
                     r_response = r_response.replace('\b','');
                 }
             }
-            sendResponse(http_response, 200, r_response);
+            sendRawResponse(http_response, 200, JSON.stringify({"r_response":r_response}));
         } else {
             console.log('Error in response: ' + r_response_raw);
             sendError(http_response, 400, err + "\nRaw R response:\n" + r_response_raw);

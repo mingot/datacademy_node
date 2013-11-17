@@ -40,13 +40,27 @@
       $(function(){ $('form').submit(function(e){
           var input = $('input');
           var inputVal = input.val();
-          $.post('http://localhost:5000/r_eval',
+          console.log('making request');
+          $.ajax({url: 'http://localhost:5000/r_eval',
               //inputVal,
-              JSON.stringify({'r_cmd': inputVal, 'testing': 'out'}),
-              function(data, status, xhr) {
+              type: 'POST',
+              data: JSON.stringify({'r_cmd': inputVal, 'testing': 'out'}),
+              // change dataType to 'json' to query-encode the data
+              //dataType: 'string',
+              headers: {'X_Cookie':'user_cookie_2'},
+              success: function(data, status, xhr) {
+                  console.log('asdasdasdas');
                   add_content('>' + inputVal);
                   input.val('');
                   responseJsonObject = JSON.parse(data);
+                  // check for error
+                  if (responseJsonObject.hasOwnProperty('err')) {
+                      console.log('Error:: ' + responseJsonObject.err);
+                      add_content(responseJsonObject.err);
+                      return;
+                  }
+                  // in our case there will always be an r_response if there isn't an error
+                  // this is because we are using the r_eval API exclusively so far
                   responseVal = responseJsonObject.r_response;
                   if (inputVal.substr(0,4) == 'plot') {
                       console.log('onPlotResponse: \n' + data);
@@ -55,7 +69,9 @@
                       console.log('onResponse: \n' + data);
                       onResponse(responseVal);
                   }
+              }
           });
+          console.log('made request');
           return false;
           $('input').focus();
       })
