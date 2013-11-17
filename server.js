@@ -34,7 +34,7 @@ function routing_handler(req, res) {
     // do some parsing of the req.url to get the root domain
     var url_groups = req.url.split("/");
     if (url_groups.length < 2) {
-        sendResponse(res, 400, 'URL endpoint ' + req.url + ' not supported');
+        sendError(res, 400, 'URL endpoint ' + req.url + ' not supported');
     }
     // take all elements after first group
     url_groups = url_groups.slice(1, url_groups.length );
@@ -51,7 +51,7 @@ function routing_handler(req, res) {
         break;
     case 'lib': // '/lib' for loading jquery and other front_end dependencies
 	if (url_groups.length > 2) {
-            sendResponse(res, 400, 'URL endpoint ' + req.url + ' not supported');
+            sendError(res, 400, 'URL endpoint ' + req.url + ' not supported');
 	}
 	// use second val to retreive file
 	console.log('Posting local lib ' + req.url);
@@ -62,14 +62,22 @@ function routing_handler(req, res) {
             res.end();
         });
         break;
-    // TODO eventually add the ability to register new users here
-    // case 'login':
-    //     break;
+    case 'register_user':
+        console.log('Registering new user');
+        console.log('Headers: %j', req.headers);
+        if (!req.headers.hasOwnProperty("cookie")) {
+            sendError(res, 400, 'Error: no cookie header in HTTP request');
+        }
+        // TODO check this was a GET
+        // TODO generate cookie here and send back to user -- stormpath?
+        new_user(req.headers.cookie);
+        sendResponse(res, 200, 'Successfully registered new user with id ' + req.headers.cookie);
+        break;
     case 'r_eval': // '/r_eval'
         // get user auth cookie
         console.log('Headers: %j', req.headers);
         if (!req.headers.hasOwnProperty("cookie")) {
-            sendResponse(res, 400, 'Error: no cookie header in HTTP POST request');
+            sendError(res, 400, 'Error: no cookie header in HTTP request');
         }
 
         // get the user's user_obj
@@ -77,14 +85,14 @@ function routing_handler(req, res) {
 
         // check this user exists already
         if (!user_obj) {
-            sendResponse(res, 400, 'Error: no user with cookie "' + req.headers.cookie + '"');
+            sendError(res, 400, 'Error: no user with cookie "' + req.headers.cookie + '"');
         }
 
         // pass this user's rserve-js connection to handle_r_input
 	handle_r_input(req, res, user_obj);
 	break;
     default:
-        sendResponse(res, 400, 'URL endpoint ' + req.url + ' not supported');
+        sendError(res, 400, 'URL endpoint ' + req.url + ' not supported');
     }
 }
 
@@ -175,13 +183,25 @@ function wrap_plot_cmd(expr) {
 // r.eval('3*5',function(a) {console.log(a);});
 
 // a simple function to write to an HTTP response
-function sendResponse(http_response, statusCode, responseString) {
+function sendRawResponse(http_response, statusCode, responseString) {
     http_response.writeHead(statusCode, {
 	'Content-Length': responseString.length,
 	'Content-Type': 'text/plain'
     });
     http_response.write(responseString);
     http_response.end();
+}
+
+// send a successful response (typically 200)
+function sendResponse(http_response, statusCode, responseString) {
+    var respJSON = JSON.stringify({'r_response':responseString});
+    sendRawResponse(http_response, statusCode, respJSON);
+}
+
+// send a failure (typically 400 or 501)
+function sendError(http_response, statusCode, errorString) {
+    var respJSON = JSON.stringify({'err':errorString});
+    sendRawResponse(http_response, statusCode, respJSON);
 }
 
 function handle_r_input(http_request, http_response, user_obj) {
@@ -197,13 +217,10 @@ function handle_r_input(http_request, http_response, user_obj) {
                     r_response = r_response.replace('\b','');
                 }
             }
-            responseString = JSON.stringify({'r_response':r_response});
-            sendResponse(http_response, 200, responseString);
+            sendResponse(http_response, 200, r_response);
         } else {
             console.log('Error in response: ' + r_response_raw);
-            responseString = JSON.stringify({'r_response':r_response_raw,
-                                             'err':'An error occurred during expression eval: ' + err});
-            sendResponse(http_response, 400, responseString);
+            sendError(http_response, 400, err + "\nRaw R response:\n" + r_response_raw);
         }
     }
 
