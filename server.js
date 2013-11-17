@@ -126,9 +126,9 @@ function handle_r_input(http_request, http_response) {
     // we define this callback here so it has access to the http_response object
     function processResponse(r_response_raw,err) {
 	if (!err){
-	    console.log("Raw value: " + r_response_raw.toString());
+	    console.log("Raw value: %s", r_response_raw.toString());
             var r_response = r_response_raw.value.value['0'];
-            console.log('Raw response: ' + r_response_raw);
+            console.log('Raw response: %j', r_response_raw);
 	    if (r_response.substring(0,4) == 'plot') {
 		// handle replacing the "_\b" with nothing in help output
 		if (r_response.indexOf('\b') >= 0) {
@@ -161,6 +161,13 @@ function handle_r_input(http_request, http_response) {
 	return;
     } else if (http_request.method == 'POST') {
 	console.log('Client has sent HTTP POST');
+        // get user auth cookie
+        console.log('Headers: %j', http_request.headers);
+        if (!http_request.headers.hasOwnProperty("cookie")) {
+	    processResponse('','Error: no cookie header in HTTP POST request');
+        }
+        // check this user exists already
+        
     } else {
 	processResponse('','Error: not configured to support HTTP requests of type ' + http_request.method + ' for /r_eval');
 	return;

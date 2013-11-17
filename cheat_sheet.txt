@@ -147,3 +147,19 @@ Connection: keep-alive
 {"r_response":"[1] 615"}
 -----
 
+Get rserve version:
+R CMD Rserve --version --help
+
+Get R version:
+R --version
+
+On work laptop, R version 3.0.2, Rserve version 1.8.0
+On nardis, R 2.14.1, Rserve version 1.7.3
+
+
+To make a request to the node backend via cURL:
+curl http://localhost:5000/r_eval --data '{"r_cmd":"4"}'
+
+To add a header, add:
+--header "X-MyHeader: 1234"
+
