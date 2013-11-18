@@ -53,6 +53,7 @@ function routing_handler(req, res) {
     case 'lib': // '/lib' for loading jquery and other front_end dependencies
 	if (url_groups.length > 2) {
             sendError(res, 400, 'URL endpoint ' + req.url + ' not supported');
+	    return;
 	}
 	// use second val to retreive file
 	console.log('Posting local lib ' + req.url);
@@ -68,6 +69,7 @@ function routing_handler(req, res) {
         console.log('Headers: %j', req.headers);
         if (!req.headers.hasOwnProperty("x_cookie")) {
             sendError(res, 400, 'Error: no x_cookie header in HTTP request');
+	    return;
         }
         // TODO check this was a GET
         // TODO generate cookie here and send back to user -- stormpath?
@@ -78,7 +80,8 @@ function routing_handler(req, res) {
         // get user auth cookie
         console.log('Headers: %j', req.headers);
         if (!req.headers.hasOwnProperty("x_cookie")) {
-            sendError(res, 400, 'Error: no cookie header in HTTP request');
+            sendError(res, 400, 'Error: no x_cookie header in HTTP request');
+	    return;
         }
 
         // get the user's user_obj
@@ -87,6 +90,7 @@ function routing_handler(req, res) {
         // check this user exists already
         if (!user_obj) {
             sendError(res, 400, 'Error: no user with cookie "' + req.headers.x_cookie + '"');
+	    return;
         }
 
 	// check if we still need to initialize the r connection with rapparmor
