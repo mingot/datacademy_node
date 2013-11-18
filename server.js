@@ -11,6 +11,12 @@ spawn = require('child_process').spawn;
 
 respcont = fs.readFileSync('test_servers/front_end.html');
 
+// start test connection to verify the rserver is up, then destroy the connection
+var r_test_connection = rserve.create();
+console.log(r_test_connection.running);
+delete r_test_connection;
+console.log("Was able to create a test connection to rserve");
+
 // create a current user map -- just in memory for now
 var usermap = {};
 // add some default users for debugging
@@ -18,11 +24,6 @@ new_user("user_cookie_1");
 new_user("user_cookie_2");
 new_user("user_cookie_3");
 console.log("Created usermap: %j", usermap);
-
-// start test connection to verify the rserver is up, then destroy the connection
-var r_test_connection = rserve.create();
-delete r_test_connection;
-console.log("Was able to create a test connection to rserve");
 
 // start listening for connections from django frontend
 var port = (process.env.PORT || 5000); // proces.env.PORT is the port set by Heroku to listen on
@@ -88,6 +89,13 @@ function routing_handler(req, res) {
             sendError(res, 400, 'Error: no user with cookie "' + req.headers.x_cookie + '"');
         }
 
+	// check if we still need to initialize the r connection with rapparmor
+	if (!user_obj.initialized) {
+	    console.log('Setting up RAppArmor');
+	    setup_rapparmor(user_obj);
+	    console.log('RAppArmor initialized');
+	}
+
         // pass this user's rserve-js connection to handle_r_input
 	handle_r_input(req, res, user_obj);
 	break;
@@ -96,12 +104,28 @@ function routing_handler(req, res) {
     }
 }
 
+// make a new rserve-js connection
+function new_rserve_connection() {
+    var connection = rserve.create();
+    console.log('Made new rserve connection');
+    return connection;
+}
+
+// set up RAppArmor on a connection
+function setup_rapparmor(user_obj) {
+    user_obj.r_connection.eval('library("RAppArmor");', function(data) {console.log(data);});
+    user_obj.r_connection.eval('aa_change_profile("r-base");', function(data) {console.log(data);});
+    user_obj.initialized = true;
+}
+
 // add a new user to the usermap
 // TODO add username, other credentials? or is that front-end only?
 function new_user(user_cookie) {
     var user_obj = {};
     // create a new connection
-    user_obj.r_connection = rserve.create();
+    user_obj.r_connection = new_rserve_connection();
+    user_obj.initialized = false;
+    //console.log(user_obj.r_connection.running);
     set_user_object(user_cookie, user_obj);
 }
 
@@ -155,6 +179,8 @@ function wrap_help_cmd(expr) {
 
 // wrap a string in with "out=capture.output(eval(try(parse(text='MY_STRING'), silent=TRUE))); out"
 function wrap_capture(expr) {
+    // A BETTER OPTION
+    // out=capture.output(tryCatch(eval(parse(text="plot(")), error=function(e) e$message));
     return "out=capture.output(eval(try(parse(text='" + expr + "'), silent=TRUE))); outp = paste(out, collapse='\n'); outp";
 }
 
@@ -257,6 +283,9 @@ function handle_r_input(http_request, http_response, user_obj) {
             user_obj.r_connection.eval(r_cmd, processResponse);
             return;
         } catch (err) {
+	    if (err instanceof rserve.RserveError) {
+		console.log('Alert: caught RserveError');
+	    }
             console.log('Received error:');
             console.log(err);
             // use error handling code in processResponse

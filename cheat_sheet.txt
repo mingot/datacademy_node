@@ -163,3 +163,58 @@ curl http://localhost:5000/r_eval --data '{"r_cmd":"4"}'
 To add a header, add:
 --header "X-MyHeader: 1234"
 
+To install RAppArmor:
+# for R 2
+sudo add-apt-repository ppa:opencpu/rapparmor
+# for R 3
+sudo add-apt-repository ppa:opencpu/rapparmor-dev
+sudo apt-get update
+sudo apt-get install r-cran-rapparmor
+
+To test the installation:
+library("RAppArmor");
+aa_change_profile("r-base");
+
+sudo R
+> system('whoami');
+root
+> eval(system('whoami'));
+root
+[1] 0
+> eval.secure(system('whoami'), uid='dylan');
+dylan
+[1] 0
+
+To use the r-base profile (which allows read-access to the filesystem but not write:
+library('RAppArmor');
+aa_change_profile('r-base');
+
+Only dir we can read/write is "tempdir()":
+> list.files()
+character(0)
+> list.files('/tmp')
+character(0)
+> tempdir()
+[1] "/tmp/Rtmp2niBFC"
+> pdw
+Error: object 'pdw' not found
+> pwd
+Error: object 'pwd' not found
+> getwd()
+[1] "/home/dylan/Dropbox/datacademy/datacademy_node"
+> list.files()
+character(0)
+> setwd(tempdir())
+> getwd()
+[1] "/tmp/Rtmp2niBFC"
+> list.files()
+character(0)
+> list.files('/tmp')
+character(0)
+> file.create('test')
+[1] TRUE
+> list.files('/tmp')
+character(0)
+> list.files()
+[1] "test"
+
