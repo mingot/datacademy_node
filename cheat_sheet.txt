@@ -218,3 +218,5 @@ character(0)
 > list.files()
 [1] "test"
 
+To make HTTP request to API (with cookies):
+curl http://localhost:5000/r_eval --header "x_cookie: user_cookie_2" --data '{"r_cmd":"4*5"}'
